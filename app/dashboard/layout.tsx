@@ -1,9 +1,9 @@
 "use client";
 
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import AuthGuard from "@/guards/auth-guard";
-import Footer from '@/components/footer/dashboard';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import Footer from "@/components/footer/dashboard";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import Navbar from "@/components/navbar";
 import Sidebar from "@/components/sidebar";
 
@@ -12,18 +12,15 @@ export default function DashboardLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <AuthGuard>
         {/* sidebar with 30% */}
         <div className="flex h-full w-full max-h-screen overflow-hidden flex-col">
           <div className="flex flex-grow">
-            <div className="w-1/6 h-full">
-              <Sidebar />
-            </div>
+            <Sidebar />
             {/* main content with 70% */}
-            <div className="w-5/6 bg-white flex flex-col">
+            <div className="flex-1 bg-white flex flex-col">
               <header className="h-16 w-full shadow-md">
                 <Navbar />
               </header>

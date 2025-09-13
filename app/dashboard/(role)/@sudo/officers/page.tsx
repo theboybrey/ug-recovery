@@ -3,12 +3,11 @@
 import React, { useState } from "react";
 
 import Button from "@/components/core/button";
-import { IUser } from "@/interfaces/users";
 import Modal from "@/components/modal";
 import NoRecordsFound from "@/components/empty";
-import Table from "../../../../../components/tables/admin/users";
+import { Table } from "@/components/table";
 import UserForm from "@/components/forms/users";
-import useUsers from "@/hooks/useUsers";
+import { useUsers } from "@/hooks/useUsers";
 
 const Users = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -18,7 +17,7 @@ const Users = () => {
   const limit = 10;
 
   // Fetch users using the useUsers hook
-  const { data, isLoading, error, refetch } = useUsers({ page, limit });
+  const { data, loading, error, refetch } = useUsers({ page, limit });
 
   const users = data?.data || [];
   const totalCount = data?.meta.totalCount || 0;
@@ -54,7 +53,7 @@ const Users = () => {
     }
   };
 
-  if (isLoading) {
+  if (loading) {
     return <div>Loading users...</div>;
   }
 
@@ -69,23 +68,9 @@ const Users = () => {
           <NoRecordsFound entity="Users" onCreate={handleCreateUser} />
         </div>
       ) : (
-        <Table
-          data={users}
-          metadata={{
-            page,
-            totalCount,
-            isFetching: isLoading,
-            pageSize: limit
-          }}
-          onFirst={() => paginationHandler("first")}
-          onPrev={() => paginationHandler("prev")}
-          onNext={() => paginationHandler("next")}
-          onLast={() => paginationHandler("last")}
-        />
+        <p>Users table here</p>
       )}
-        {
-          
-        }
+      {}
     </div>
   );
 };

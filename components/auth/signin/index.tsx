@@ -52,21 +52,8 @@ const LoginPage = () => {
           window.location.href = "/dashboard";
           toasts.success("Login🎉", "Login Successful");
         } else {
-          // fake auth
-          const fakeUser = {
-            _id: "1",
-            email: "fake@email.com",
-            name: "Fake User",
-            phone: values.phone,
-            role: "Student" as any,
-            profileImageUrl: "",
-          };
-          login(fakeUser);
-          window.location.href = "/dashboard";
-          toasts.success("Login🎉", "Login Successful");
-
-          //   console.error(error);
-          //   toasts.error("Login 👺", error);
+          console.error(error);
+          toasts.error("Login 👺", error);
         }
       });
     },
@@ -76,10 +63,7 @@ const LoginPage = () => {
     <>
       <div className="mx-auto w-full max-w-sm lg:w-96">
         <div className="text-left">
-          <Link
-            href={"/dashboard"}
-            className="text-xl font-extrabold text-text"
-          >
+          <Link href={"/"} className="text-xl font-extrabold text-text">
             Login.
           </Link>
           <p className="mt-2 text-sm text-text">Welcome back to UniRecover!</p>
@@ -114,7 +98,7 @@ const LoginPage = () => {
                 />
               </div>
               <div>
-                <Button type="submit" disabled={loading} className="w-full ">
+                <Button type="submit" disabled={loading} className="w-full py-2 h-12">
                   {loading ? "Logging in..." : "Login"}
                 </Button>
               </div>

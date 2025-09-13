@@ -20,42 +20,31 @@ export const getRoutes = (role: IRoles): INavItem[] => {
   const defaults = [
     {
       name: "Dashboard",
-      path: "/dashboard",
+      path: "",
       Icon: Home,
     },
   ];
   switch (role) {
-    case IRoles.HOD:
+    case IRoles.SUDO:
       return [
         ...defaults,
         {
-          name: "Users",
-          path: "/users",
+          name: "Officers",
+          path: "officers",
           Icon: User,
         },
         {
-          name: "Events",
-          path: "/events",
+          name: "Items",
+          path: "items",
           Icon: Firstline,
         },
         {
-          name: "Transactions",
-          path: "/transactions",
-          Icon: Moneys,
-        },
-        {
-          name: "Tokens",
-          path: "/tokens",
-          Icon: Python,
-        },
-
-        {
           name: "Settings",
-          path: "/settings",
+          path: "settings",
           Icon: Setting2,
         },
       ];
-    case IRoles.LECTURER:
+    case IRoles.OFFICER:
       return [...defaults];
     // Add cases for other roles as needed
     default:
