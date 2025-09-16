@@ -94,12 +94,12 @@ body {
 
 *::-webkit-scrollbar-track,
 .scrollbar-show::-webkit-scrollbar-track {
-  box-shadow: inset 0 0 6px #3f000f;
+  box-shadow: inset 0 0 6px #2f4a75;
 }
 
 *::-webkit-scrollbar-thumb,
 .scrollbar-show::-webkit-scrollbar-thumb {
-  background-color: #3f000f;
+  background-color: #2f4a75;
   outline: none;
 }
 

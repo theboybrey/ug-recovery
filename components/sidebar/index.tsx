@@ -106,7 +106,7 @@ const Sidebar = () => {
         )}
       >
         <Image
-          src="/assets/logo.png"
+          src="/assets/ugrecover.png"
           alt="logo"
           width={collapsed ? 48 : 40}
           height={collapsed ? 48 : 40}
@@ -114,7 +114,7 @@ const Sidebar = () => {
         />
         {!collapsed && (
           <>
-            <p className="font-bold text-white text-2xl ml-2">UniRecover.</p>
+            <p className="font-bold text-white text-2xl ml-2">UGRecover.</p>
             <button
               aria-label="Collapse sidebar"
               onClick={() => setCollapsed(true)}

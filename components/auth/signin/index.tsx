@@ -36,16 +36,20 @@ const LoginPage = () => {
   const { login } = useAuthContext();
   const { handleSubmit, ...form } = useFormik({
     initialValues: {
-      phone: "",
-      pin: "",
+      email: "",
+      password: "",
     },
     validationSchema: Yup.object().shape({
-      phone: Yup.string().length(10).required(),
-      pin: Yup.string().length(6).required(),
+      email: Yup.string()
+        .email("Enter a valid email")
+        .required("Email is required"),
+      password: Yup.string()
+        .min(6, "Password must be at least 6 characters")
+        .required("Password is required"),
     }),
     onSubmit: async (values) => {
       setLoading(true);
-      UserService.login(values.phone, values.pin, (error, user) => {
+      UserService.login(values.email, values.password, (error, user) => {
         setLoading(false);
         if (!error) {
           login(user);
@@ -60,54 +64,51 @@ const LoginPage = () => {
   });
 
   return (
-    <>
-      <div className="mx-auto w-full max-w-sm lg:w-96">
-        <div className="text-left">
-          <Link href={"/"} className="text-xl font-extrabold text-text">
-            Login.
-          </Link>
-          <p className="mt-2 text-sm text-text">Welcome back to UniRecover!</p>
-        </div>
+    <div className="mx-auto w-full max-w-sm lg:w-96">
+      <div className="text-left">
+        <Link href={"/"} className="text-xl font-extrabold text-text">
+          Login.
+        </Link>
+        <p className="mt-2 text-sm text-text">Welcome back to UGRecover!</p>
+      </div>
 
-        <div className="mt-8">
-          <div className="mt-6">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <Input
-                  id="phone"
-                  label="Phone"
-                  type="text"
-                  required
-                  placeholder="eg. 0233445567"
-                  onChange={form.handleChange}
-                  onBlur={form.handleBlur}
-                  validation={form}
-                />
-              </div>
+      <div className="mt-8">
+        <div className="mt-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <Input
+                id="email"
+                label="Email"
+                type="email"
+                required
+                placeholder="eg. johndoe@email.com"
+                onChange={form.handleChange}
+                onBlur={form.handleBlur}
+                validation={form}
+              />
+            </div>
 
-              <div className="space-y-1">
-                <Input
-                  id="pin"
-                  label="Pin"
-                  type="text"
-                  required
-                  placeholder="e.g.  .............."
-                  onChange={form.handleChange}
-                  onBlur={form.handleBlur}
-                  validation={form}
-                />
-              </div>
-              <div>
-                <Button type="submit" disabled={loading} className="w-full py-2 h-12">
-                  {loading ? "Logging in..." : "Login"}
-                </Button>
-              </div>
-            </form>
-          </div>
+            <div className="space-y-1">
+              <Input
+                id="password"
+                label="Password"
+                type="password"
+                required
+                placeholder="Enter your password"
+                onChange={form.handleChange}
+                onBlur={form.handleBlur}
+                validation={form}
+              />
+            </div>
+            <div>
+              <Button type="submit" disabled={loading} className="w-full py-2">
+                {loading ? "Logging in..." : "Login"}
+              </Button>
+            </div>
+          </form>
         </div>
       </div>
-      <LoginFooter />
-    </>
+    </div>
   );
 };
 

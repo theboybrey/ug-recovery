@@ -24,8 +24,8 @@ class UserService {
   };
 
   static login = async (
-    phone: string,
-    pin: string,
+    email: string,
+    password: string,
     callback: IServerCallback
   ) => {
     try {
@@ -41,7 +41,7 @@ class UserService {
 
       setCookie("access_token", FakeTokens.access_token);
       setCookie("refresh_token", FakeTokens.refresh_token);
-      const user = getFakeUser({ phone });
+      const user = getFakeUser({ email });
       callback(null, user);
     } catch (e: any) {
       console.log(`FETCH "user/login" error`, e);

@@ -1,7 +1,7 @@
 import "./globals.css";
 import "react-toastify/dist/ReactToastify.min.css";
-import 'react-date-range/dist/styles.css'; // main style file
-import 'react-date-range/dist/theme/default.css'; // theme css file
+import "react-date-range/dist/styles.css"; // main style file
+import "react-date-range/dist/theme/default.css"; // theme css file
 
 import AuthContextProvider from "@/providers/auth-context";
 import BouncingSquaresLoader from "@/components/preloader";
@@ -11,7 +11,7 @@ import { Suspense } from "react";
 import { ToastContainer } from "react-toastify";
 
 export const metadata: Metadata = {
-  title: "UG - UniRecover",
+  title: "UG - UGRecover",
   description:
     "Where UG students find their lost items and reunite with their owners.",
 };
@@ -24,9 +24,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <AuthContextProvider>
-        <body
-          className="text-gray-900 bg-gray-100 h-screen w-screen overflow-hidden"
-        >
+        <body className="text-gray-900 bg-gray-100 h-screen w-screen overflow-x-hidden">
           <ToastContainer
             position="top-right"
             className={"app__toast"}
@@ -40,9 +38,7 @@ export default function RootLayout({
             theme="light"
           />
           <Providers>
-            <Suspense fallback={
-              <BouncingSquaresLoader />
-            }>{children}</Suspense>
+            <Suspense fallback={<BouncingSquaresLoader />}>{children}</Suspense>
           </Providers>
         </body>
       </AuthContextProvider>
