@@ -3,7 +3,7 @@ import { classNames } from '@/utils';
 
 const BouncingSquaresLoader: React.FC = () => {
     return (
-        <div className="fixed inset-0 flex items-center justify-center bg-gray z-50">
+        <div className="fixed inset-0 flex items-center justify-center bg-secondary-100 z-50">
             <div className="flex space-x-2">
                 {Array.from({ length: 5 }).map((_, index) => (
                     <div

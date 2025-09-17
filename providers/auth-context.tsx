@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useMemo, useState } from "react";
-import { getCookies, removeCookie } from "typescript-cookie";
+import { getCookies, removeCookie, setCookie } from "typescript-cookie";
 
 import { IUser } from "@/models/user.model";
 
@@ -34,23 +34,25 @@ export default function AuthContextProvider({
   const login = useCallback((user: IUser) => {
     setIsLoggedIn(true);
     setUser(user);
+    setCookie("current_user", JSON.stringify(user));
   }, []);
-
 
   const logout = useCallback(() => {
     setIsLoggedIn(false);
     setUser(null);
-    removeAllCookies()
-    window.location.href = "/signin"
+    removeAllCookies();
+    window.location.href = "/signin";
   }, []);
 
-
-  const contextValues = useMemo(() => ({
-    user,
-    isLoggedIn,
-    login,
-    logout,
-  }), [isLoggedIn, login, logout, user])
+  const contextValues = useMemo(
+    () => ({
+      user,
+      isLoggedIn,
+      login,
+      logout,
+    }),
+    [isLoggedIn, login, logout, user]
+  );
 
   return (
     <AuthContext.Provider value={contextValues}>

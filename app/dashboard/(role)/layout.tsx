@@ -4,10 +4,17 @@ export default function Layout({
   children,
   sudo,
   officer,
+  student,
 }: {
   children: React.ReactNode;
   officer: React.ReactNode;
   sudo: React.ReactNode;
+  student: React.ReactNode;
 }) {
-  return <RoleGuard sudo={sudo} officer={officer} />;
+  console.log("Dashboard Layout - Rendering RoleGuard with children", {
+    sudo: !!sudo,
+    officer: !!officer,
+    student: !!student,
+  });
+  return <RoleGuard sudo={sudo} officer={officer} student={student} />;
 }

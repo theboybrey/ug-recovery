@@ -21,53 +21,56 @@ const NavItem: React.FC<INavItem & { collapsed: boolean }> = ({
   const [active, setActive] = useState<boolean>(false);
 
   useEffect(() => {
-    // Remove leading/trailing slashes for comparison
-    const cleanPath = (p: string) => p.replace(/^\/+|\/+$/g, "");
-    const current = cleanPath(pathname.replace("/dashboard", ""));
-    const item = cleanPath(path);
-    if (item === "") {
-      setActive(current === "" || current === "/");
+    // Extract the part after '/dashboard/' from pathname
+    const getDashboardPath = (fullPath: string) => {
+      if (!fullPath) return "";
+      // Remove '/dashboard' prefix and any leading/trailing slashes
+      return fullPath.replace(/^\/dashboard\/?/, "").replace(/\/+$/, "");
+    };
+
+    const currentPath = getDashboardPath(pathname);
+    const itemPath = path || ""; // Handle empty path for dashboard
+
+    // For dashboard root (empty path), check if currentPath is empty
+    if (itemPath === "") {
+      setActive(currentPath === "");
     } else {
-      setActive(current === item);
+      // For other paths, check exact match or if currentPath starts with itemPath
+      setActive(
+        currentPath === itemPath || currentPath.startsWith(itemPath + "/")
+      );
     }
   }, [pathname, path]);
 
   return (
-    <div
+    <Link
+      href={`/dashboard/${path}`}
       className={clsx(
-        "flex items-center text-white w-full py-2 rounded-full transition-all duration-200 relative group",
-        active && "bg-primary text-white",
-        "hover:bg-primary",
+        "flex items-center text-white w-full py-2 rounded-full transition-all duration-200 relative group hover:bg-primary-700",
+        active && "bg-primary-800 text-white",
         collapsed ? "justify-center px-0" : "justify-start px-3"
       )}
+      tabIndex={0}
     >
-      <Link
-        href={`/dashboard/${path}`}
-        className={clsx(
-          "flex items-center w-full h-full",
-          collapsed ? "justify-center" : "justify-start"
-        )}
-        tabIndex={0}
-      >
-        {Icon && (
-          <span
-            className={clsx(
-              collapsed ? "mx-0" : "mr-4",
-              "transition-all duration-200"
-            )}
-          >
-            {<Icon />}
-          </span>
-        )}
-        {!collapsed && <span>{name}</span>}
-      </Link>
+      {Icon && (
+        <span
+          className={clsx(
+            collapsed ? "mx-0" : "mr-4",
+            "transition-all duration-200"
+          )}
+        >
+          {<Icon />}
+        </span>
+      )}
+      {!collapsed && <span>{name}</span>}
+
       {/* Custom tooltip for collapsed state */}
       {collapsed && (
         <span className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 whitespace-nowrap bg-sidebar text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity z-50 shadow-lg border border-white/10">
           {name}
         </span>
       )}
-    </div>
+    </Link>
   );
 };
 
@@ -139,14 +142,18 @@ const Sidebar = () => {
       <div
         className={clsx(
           "flex items-start mt-6 flex-col w-full transition-all duration-200",
-          collapsed ? "pl-2 pr-0" : "pl-6 pr-2"
+          collapsed ? "pl-2 pr-0" : "px-2"
         )}
       >
         {/* nav with icons */}
         {routes.map((route, idx) => (
           <div
             key={route.path}
-            className={clsx(collapsed && "justify-center", idx !== 0 && "mt-3")}
+            className={clsx(
+              "w-full",
+              collapsed && "justify-center",
+              idx !== 0 && "mt-3"
+            )}
             style={collapsed ? { width: "100%" } : {}}
           >
             <NavItem {...route} collapsed={collapsed} />

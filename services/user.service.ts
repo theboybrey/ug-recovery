@@ -1,7 +1,8 @@
 import { FakeTokens, getFakeUser } from "@/models/faker";
+import { getCookie, setCookie } from "typescript-cookie";
 
 import Axios from "@/utils/Axios";
-import { setCookie } from "typescript-cookie";
+import { IRoles } from "@/models/roles.model";
 
 export interface IServerCallback {
   (error: string | null, data?: any): void;
@@ -14,6 +15,11 @@ class UserService {
       //   if (data.success) {
       //     return data.data;
       //   }
+
+      const existingUser = getCookie("current_user");
+      if (existingUser) {
+        return JSON.parse(existingUser);
+      }
       return getFakeUser();
     } catch (e: any) {
       console.log(`FETCH "user/me" error`, e);
@@ -26,6 +32,7 @@ class UserService {
   static login = async (
     email: string,
     password: string,
+    role: IRoles,
     callback: IServerCallback
   ) => {
     try {
@@ -41,7 +48,7 @@ class UserService {
 
       setCookie("access_token", FakeTokens.access_token);
       setCookie("refresh_token", FakeTokens.refresh_token);
-      const user = getFakeUser({ email });
+      const user = getFakeUser({ email, role }, role);
       callback(null, user);
     } catch (e: any) {
       console.log(`FETCH "user/login" error`, e);

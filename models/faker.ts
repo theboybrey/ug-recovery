@@ -3,7 +3,8 @@ import { IUser } from "./user.model";
 
 // Utility to generate a fake user with optional overrides
 export function getFakeUser(
-  overrides: Partial<IUser> = {}
+  overrides: Partial<IUser> = {},
+  role?: IRoles
 ): IUser {
   return {
     _id: "1234567890abcdef",
@@ -11,7 +12,7 @@ export function getFakeUser(
     name: "John Doe",
     phone: "0233445567",
     profileImageUrl: "https://randomuser.me/api/portraits/men/1.jpg",
-    role: IRoles.SUDO,
+    role: role || IRoles.OFFICER,
     ...overrides,
   };
 }
