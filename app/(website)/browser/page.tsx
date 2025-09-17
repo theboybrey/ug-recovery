@@ -375,21 +375,21 @@ const ItemsBrowser = () => {
       <div className="absolute top-0 left-0 right-0 h-1 bg-primary-600 z-50"></div>
 
       {/* Sidebar: Logo and Navigation */}
-      <aside className="w-64 min-w-[200px] bg-card-bg border-r border-card-border flex flex-col shadow-sm">
+      <aside className="hidden md:flex w-64 min-w-[200px] bg-card-bg border-r border-card-border flex-col shadow-sm">
         {/* Logo Section */}
         <div className="p-6 border-b border-card-border bg-primary-600">
-          <a href="/" className="flex items-center gap-3">
+          <Link href="/" className="flex items-center gap-3">
             <Image
-              src="/assets/ugrecover.png"
-              alt="UGRecover Logo"
+              src="/assets/logo.png"
+              alt="UniRecover Logo"
               width={36}
               height={36}
               className="border border-white rounded bg-white"
             />
             <span className="font-bold text-xl tracking-wide text-white">
-              UGRecover
+              UniRecover
             </span>
-          </a>
+          </Link>
           <p className="text-primary-100 text-sm mt-2">
             University of Ghana Lost & Found
           </p>
@@ -422,7 +422,7 @@ const ItemsBrowser = () => {
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Fixed Search and Filters Section */}
-        <div className="bg-card-bg border-b border-card-border px-2 md:px-10 py-8 shadow-sm">
+        <div className="bg-card-bg border-b border-card-border px-2 md:px-10 py-3 shadow-sm">
           {/* University Header */}
           <div className="mb-2">
             <h1 className="text-2xl font-bold text-primary-600 mb-2">
