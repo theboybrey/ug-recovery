@@ -8,9 +8,9 @@ const ClaimHistory = () => {
   const { claimRequests, user } = useAuthContext();
   const [selectedClaim, setSelectedClaim] = useState<ClaimRequest | null>(null);
 
-  // Filter claims made by the current user
-  const myClaims = claimRequests.filter(
-    (claim) => claim.claimantEmail === user?.email
+  // Only show claims that have been approved (successfully accepted)
+  const acceptedClaims = claimRequests.filter(
+    (claim) => claim.claimantEmail === user?.email && claim.status === "Approved"
   );
 
   return (
@@ -18,7 +18,7 @@ const ClaimHistory = () => {
       <div className="space-y-6">
         <div className="bg-gradient-to-r from-primary-600 to-primary-800 rounded-xl p-6 text-white">
           <h1 className="text-2xl font-bold mb-2">Claim History</h1>
-          <p className="opacity-90">See all claims you have made in the past</p>
+          <p className="opacity-90">See all items you have successfully claimed</p>
         </div>
         <div className="bg-card-bg rounded-xl shadow-sm border border-card-border overflow-hidden">
           <div className="overflow-x-auto">
@@ -32,27 +32,19 @@ const ClaimHistory = () => {
                 </tr>
               </thead>
               <tbody>
-                {myClaims.length === 0 ? (
+                {acceptedClaims.length === 0 ? (
                   <tr>
                     <td colSpan={4} className="p-6 text-center text-text-muted">
-                      No claim history found.
+                      No successfully claimed items found.
                     </td>
                   </tr>
                 ) : (
-                  myClaims.map((claim) => (
+                  acceptedClaims.map((claim) => (
                     <tr key={claim.id} className="border-b border-card-border hover:bg-surface transition-colors">
                       <td className="p-4">{claim.itemName}</td>
                       <td className="p-4">{claim.submittedAt}</td>
                       <td className="p-4">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          claim.status === "Pending"
-                            ? "bg-alert-bg text-alert"
-                            : claim.status === "Approved"
-                            ? "bg-success-bg text-success"
-                            : claim.status === "Rejected"
-                            ? "bg-error-bg text-error"
-                            : "bg-primary-100 text-primary-800"
-                        }`}>
+                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-success-bg text-success">
                           {claim.status}
                         </span>
                       </td>
@@ -92,15 +84,7 @@ const ClaimHistory = () => {
                 </div>
                 <div>
                   <span className="text-text-muted">Status:</span>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    selectedClaim.status === "Pending"
-                      ? "bg-alert-bg text-alert"
-                      : selectedClaim.status === "Approved"
-                      ? "bg-success-bg text-success"
-                      : selectedClaim.status === "Rejected"
-                      ? "bg-error-bg text-error"
-                      : "bg-primary-100 text-primary-800"
-                  }`}>
+                  <span className="px-2 py-1 rounded-full text-xs font-medium bg-success-bg text-success">
                     {selectedClaim.status}
                   </span>
                 </div>

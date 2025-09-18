@@ -13,7 +13,7 @@ const initialItem = {
   status: "Available",
   founder: "",
   features: [],
-  images: [],
+  images: [] as string[], // <-- fix type here
   mainImage: "",
 };
 
@@ -32,7 +32,10 @@ const AddItemPage = () => {
   const { lostItems, setLostItems, user } = useAuthContext();
   const [item, setItem] = useState(initialItem);
   const [success, setSuccess] = useState(false);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
 
+  // Handle input changes
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
@@ -42,6 +45,21 @@ const AddItemPage = () => {
     setItem((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Handle image selection
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    setImageFiles(files);
+    // Generate previews
+    const previews = files.map((file) => URL.createObjectURL(file));
+    setImagePreviews(previews);
+    setItem((prev) => ({
+      ...prev,
+      images: previews,
+      mainImage: previews[0] || "",
+    }));
+  };
+
+  // Handle form submit
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const newItem = {
@@ -60,6 +78,8 @@ const AddItemPage = () => {
     setLostItems([...lostItems, newItem]);
     setSuccess(true);
     setItem(initialItem);
+    setImageFiles([]);
+    setImagePreviews([]);
   };
 
   return (
@@ -171,6 +191,34 @@ const AddItemPage = () => {
             max={30}
             className="w-full px-3 py-2 border border-card-border rounded-lg focus:ring-2 focus:ring-primary-500 bg-surface"
           />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-text mb-1">
+            Images
+          </label>
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={handleImageChange}
+            className="w-full px-3 py-2 border border-card-border rounded-lg focus:ring-2 focus:ring-primary-500 bg-surface"
+          />
+          {imagePreviews.length > 0 && (
+            <div className="flex gap-2 mt-3 flex-wrap">
+              {imagePreviews.map((src, idx) => (
+                <div
+                  key={idx}
+                  className="w-20 h-20 rounded-lg overflow-hidden border border-card-border bg-surface flex items-center justify-center"
+                >
+                  <img
+                    src={src}
+                    alt={`Preview ${idx + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
         <button
           type="submit"
