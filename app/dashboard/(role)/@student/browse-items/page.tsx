@@ -30,6 +30,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { faker } from "@faker-js/faker";
 import { generateMockItems } from "@/utils/generateMockItems";
+import toasts from "@/utils/toasts";
 import { useAuthContext } from "@/hooks/userContext";
 
 const PAGE_SIZE = 12;
@@ -178,6 +179,10 @@ const ItemDrawer = ({
   isOpen: boolean;
   onClose: () => void;
 }) => {
+  const { user, claimRequests, setClaimRequests } = useAuthContext();
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [loading, setLoading] = useState(false);
+
   if (!item) return null;
 
   const daysUntilExpiry = getDaysUntilExpiry(
@@ -190,6 +195,44 @@ const ItemDrawer = ({
       : daysUntilExpiry <= 14
       ? "warning"
       : "normal";
+
+  // Claim handler
+  const handleClaim = () => {
+    setShowConfirm(true);
+  };
+
+  const confirmClaim = async () => {
+    setLoading(true);
+    // Simulate loading
+    setTimeout(() => {
+      // Add claim to context
+      setClaimRequests([
+        ...claimRequests,
+        {
+          id: claimRequests.length + 1,
+          itemId: item.id,
+          itemName: item.name,
+          itemImage: item.mainImage,
+          claimantName: user?.name || "Student",
+          claimantEmail: user?.email || "",
+          claimantPhone: user?.phone || "",
+          claimantStudentId: user?._id || undefined,
+          description: `Claim for ${item.name}`,
+          identificationDetails: "Student ID and description provided.",
+          status: "Pending",
+          submittedAt: new Date().toISOString().slice(0, 16).replace("T", " "),
+          collectionPoint: item.checkpointOffice,
+        },
+      ]);
+      setLoading(false);
+      setShowConfirm(false);
+      toasts.success(
+        "Claim Submitted",
+        `Your claim for '${item.name}' has been submitted and is pending review.`
+      );
+      onClose();
+    }, 1500);
+  };
 
   return (
     <>
@@ -366,9 +409,13 @@ const ItemDrawer = ({
           {/* Footer with Claim Button */}
           <div className="p-6 border-t border-card-border bg-surface">
             {item.status === "Available" ? (
-              <button className="w-full bg-primary-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-primary-700 transition-colors flex items-center justify-center gap-2">
+              <button
+                className="w-full bg-primary-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-primary-700 transition-colors flex items-center justify-center gap-2"
+                onClick={handleClaim}
+                disabled={loading}
+              >
                 <Package className="w-4 h-4" />
-                Claim This Item
+                {loading ? "Submitting..." : "Claim This Item"}
               </button>
             ) : (
               <button
@@ -386,6 +433,37 @@ const ItemDrawer = ({
             </p>
           </div>
         </div>
+        {/* Confirm Modal */}
+        {showConfirm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-card-bg rounded-xl p-6 w-full max-w-sm mx-4">
+              <h3 className="text-lg font-semibold text-text mb-4">
+                Confirm Claim
+              </h3>
+              <p className="mb-6 text-text-muted">
+                Are you sure you want to claim{" "}
+                <span className="font-bold text-text">{item.name}</span>? This will
+                submit your claim for review.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowConfirm(false)}
+                  className="flex-1 px-4 py-2 border border-card-border rounded-lg hover:bg-surface transition-colors text-text"
+                  disabled={loading}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmClaim}
+                  className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors"
+                  disabled={loading}
+                >
+                  {loading ? "Submitting..." : "Confirm Claim"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );
