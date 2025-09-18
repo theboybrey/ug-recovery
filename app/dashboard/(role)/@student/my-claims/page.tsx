@@ -5,13 +5,23 @@ import { Eye } from "lucide-react";
 import type { ClaimRequest } from "@/providers/auth-context";
 
 const MyClaims = () => {
-  const { claimRequests, user } = useAuthContext();
+  const { claimRequests, user, setClaimRequests } = useAuthContext();
   const [selectedClaim, setSelectedClaim] = useState<ClaimRequest | null>(null);
+  const [removingId, setRemovingId] = useState<number | null>(null);
 
   // Filter claims made by the current user
   const myClaims = claimRequests.filter(
     (claim) => claim.claimantEmail === user?.email
   );
+
+  // Remove claim handler
+  const handleRemove = (id: number) => {
+    setRemovingId(id);
+    setTimeout(() => {
+      setClaimRequests((prev) => prev.filter((claim) => claim.id !== id));
+      setRemovingId(null);
+    }, 1000); // Simulate loading
+  };
 
   return (
     <div className="min-h-screen bg-background p-6">
@@ -56,12 +66,19 @@ const MyClaims = () => {
                           {claim.status}
                         </span>
                       </td>
-                      <td className="p-4">
+                      <td className="p-4 flex gap-2">
                         <button
                           className="p-1 text-primary-600 hover:bg-primary-50 rounded transition-colors"
                           onClick={() => setSelectedClaim(claim)}
                         >
                           <Eye className="w-4 h-4" />
+                        </button>
+                        <button
+                          className={`p-1 text-error hover:bg-error-bg rounded transition-colors text-xs font-medium border border-error ${removingId === claim.id ? "opacity-50 cursor-not-allowed" : ""}`}
+                          onClick={() => handleRemove(claim.id)}
+                          disabled={removingId === claim.id}
+                        >
+                          {removingId === claim.id ? "Removing..." : "Remove"}
                         </button>
                       </td>
                     </tr>
