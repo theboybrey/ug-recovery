@@ -39,14 +39,14 @@ export const getRoutes = (role: IRoles): INavItem[] => {
       return [
         ...defaults,
         {
-          name: "Collection Points",
-          path: "collection-points",
-          Icon: Location,
-        },
-        {
           name: "Officers",
           path: "officers",
           Icon: User,
+        },
+        {
+          name: "Collection Points",
+          path: "collection-points",
+          Icon: Location,
         },
         {
           name: "All Items",
