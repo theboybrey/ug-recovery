@@ -29,7 +29,12 @@ interface Officer {
   name: string;
   email: string;
   phone: string;
+  role: string;
+  status: "Active" | "Inactive";
+  joinDate?: string;
   assigned?: boolean;
+  assignedPoint?: string;
+  assignedPointId?: number;
 }
 
 interface CollectionPoint {
@@ -154,9 +159,13 @@ const SudoCollectionPoints: React.FC = () => {
   // Handle officer assignment
   const assignOfficer = (officer: Officer): void => {
     if (!selectedPoint) return;
-    // Mark officer as assigned
-    // Mark officer as assigned globally
-    const updatedOfficer = { ...officer, assigned: true };
+    // Mark officer as assigned and set assignedPoint fields
+    const updatedOfficer = {
+      ...officer,
+      assigned: true,
+      assignedPoint: selectedPoint.name,
+      assignedPointId: selectedPoint.id,
+    };
     setOfficers(
       officers.map((o) => (o.id === officer.id ? updatedOfficer : o))
     );
@@ -175,9 +184,18 @@ const SudoCollectionPoints: React.FC = () => {
   // Handle officer removal
   const removeOfficer = (officerId: number): void => {
     if (!selectedPoint) return;
-    // Mark officer as unassigned
+    // Mark officer as unassigned and clear assignedPoint fields
     setOfficers(
-      officers.map((o) => (o.id === officerId ? { ...o, assigned: false } : o))
+      officers.map((o) =>
+        o.id === officerId
+          ? {
+              ...o,
+              assigned: false,
+              assignedPoint: undefined,
+              assignedPointId: undefined,
+            }
+          : o
+      )
     );
     const updatedPoint: CollectionPoint = {
       ...selectedPoint,
