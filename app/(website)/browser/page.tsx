@@ -1,11 +1,50 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import {
+  BookOpen,
+  Briefcase,
+  Building,
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  FileText,
+  Filter,
+  Images,
+  Key,
+  MapPin,
+  Package,
+  Search,
+  Shirt,
+  Smartphone,
+  Tag,
+  User,
+  Watch,
+  X,
+} from "lucide-react";
+import type { Category, LostItem } from "@/providers/auth-context";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import Image from "next/image";
 import Link from "next/link";
+import { faker } from "@faker-js/faker";
 import { generateMockItems } from "@/utils/generateMockItems";
+import { useAuthContext } from "@/hooks/userContext";
+
+const PAGE_SIZE = 12;
+
+// Icon mapping for dynamic category rendering
+const iconMap: { [key: string]: React.FC<any> } = {
+  Smartphone,
+  BookOpen,
+  Shirt,
+  Watch,
+  FileText,
+  Briefcase,
+  Key,
+  Package,
+};
 
 const categories = [
   "Electronics",
@@ -17,16 +56,70 @@ const categories = [
   "Keys",
   "Others",
 ];
+function generateMockCategories(): Category[] {
+  const categoryColors = [
+    "#3B82F6", // Blue
+    "#10B981", // Green
+    "#F59E0B", // Amber
+    "#EF4444", // Red
+    "#8B5CF6", // Purple
+    "#06B6D4", // Cyan
+    "#F97316", // Orange
+    "#6B7280", // Gray
+  ];
 
-const PAGE_SIZE = 12;
+  const categoryIcons = [
+    "Smartphone", // Electronics
+    "BookOpen", // Books
+    "Shirt", // Clothing
+    "Watch", // Accessories
+    "FileText", // Documents
+    "Briefcase", // Bags
+    "Key", // Keys
+    "Package", // Others
+  ];
+
+  return categories.map((name, index) => ({
+    id: index + 1,
+    name,
+    description: `Category for ${name.toLowerCase()} items found on campus`,
+    color: categoryColors[index],
+    itemCount: faker.number.int({ min: 2, max: 25 }),
+    status: "Active" as const,
+    createdAt: faker.date.past().toISOString().slice(0, 10),
+    lastUpdated: faker.date.recent().toISOString().slice(0, 10),
+    iconName: categoryIcons[index],
+  }));
+}
 
 // Helper function to format date consistently
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
-  const day = date.getDate().toString().padStart(2, "0");
-  const month = (date.getMonth() + 1).toString().padStart(2, "0");
-  const year = date.getFullYear();
-  return `${day}/${month}/${year}`;
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+};
+
+// Calculate days until expiry
+const getDaysUntilExpiry = (
+  keyedInDate: string,
+  retentionPeriod: number
+): number => {
+  const keyedDate = new Date(keyedInDate);
+  const expiryDate = new Date(
+    keyedDate.getTime() + retentionPeriod * 24 * 60 * 60 * 1000
+  );
+  const today = new Date();
+  const diffTime = expiryDate.getTime() - today.getTime();
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+};
+
+// Get icon component
+const getIconComponent = (iconName: string) => {
+  const IconComponent = iconMap[iconName] || Package;
+  return IconComponent;
 };
 
 // Image Gallery Component for the drawer
@@ -38,21 +131,58 @@ const ImageGallery = ({
   itemName: string;
 }) => {
   const [selectedImage, setSelectedImage] = useState(0);
+
+  const nextImage = () => {
+    if (selectedImage < images.length - 1) {
+      setSelectedImage(selectedImage + 1);
+    }
+  };
+
+  const prevImage = () => {
+    if (selectedImage > 0) {
+      setSelectedImage(selectedImage - 1);
+    }
+  };
+
   return (
     <div className="mb-6">
       {/* Main Image */}
-      <div className="mb-4 bg-gray-50 rounded-lg overflow-hidden">
-        <Image
+      <div className="mb-4 bg-surface rounded-xl overflow-hidden relative">
+        <img
           src={images[selectedImage]}
           alt={`${itemName} - Image ${selectedImage + 1}`}
-          width={400}
-          height={300}
           className="w-full h-64 object-cover"
           onError={(e) => {
-            // Fallback to placeholder if image doesn't exist
             e.currentTarget.src = "/assets/file.svg";
           }}
         />
+
+        {/* Navigation arrows */}
+        {images.length > 1 && (
+          <>
+            <button
+              onClick={prevImage}
+              disabled={selectedImage === 0}
+              className="absolute left-2 top-1/2 -translate-y-1/2 p-2 bg-black/50 text-white rounded-full hover:bg-black/70 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button
+              onClick={nextImage}
+              disabled={selectedImage === images.length - 1}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-black/50 text-white rounded-full hover:bg-black/70 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </>
+        )}
+
+        {/* Image counter */}
+        {images.length > 1 && (
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/70 text-white px-2 py-1 rounded-full text-xs">
+            {selectedImage + 1} / {images.length}
+          </div>
+        )}
       </div>
 
       {/* Thumbnail Navigation */}
@@ -65,14 +195,12 @@ const ImageGallery = ({
               className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
                 selectedImage === index
                   ? "border-primary-600"
-                  : "border-gray-200 hover:border-primary-300"
+                  : "border-card-border hover:border-primary-300"
               }`}
             >
-              <Image
+              <img
                 src={image}
                 alt={`${itemName} thumbnail ${index + 1}`}
-                width={64}
-                height={64}
                 className="w-full h-full object-cover"
                 onError={(e) => {
                   e.currentTarget.src = "/assets/file.svg";
@@ -92,16 +220,20 @@ const ItemDrawer = ({
   isOpen,
   onClose,
 }: {
-  item: any | null;
+  item: LostItem | null;
   isOpen: boolean;
   onClose: () => void;
 }) => {
   if (!item) return null;
 
-  const retentionStatus =
-    item.retentionPeriod <= 7
+  const daysUntilExpiry = getDaysUntilExpiry(
+    item.keyedInDate,
+    item.retentionPeriod
+  );
+  const expiryStatus =
+    daysUntilExpiry <= 7
       ? "urgent"
-      : item.retentionPeriod <= 14
+      : daysUntilExpiry <= 14
       ? "warning"
       : "normal";
 
@@ -117,19 +249,19 @@ const ItemDrawer = ({
 
       {/* Drawer */}
       <div
-        className={`fixed top-0 right-0 h-full w-full max-w-lg bg-white shadow-xl z-50 transform transition-transform duration-300 ${
+        className={`fixed top-0 right-0 h-full w-full max-w-lg bg-card-bg shadow-xl z-50 transform transition-transform duration-300 ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-primary-600 text-white">
+          <div className="flex items-center justify-between p-6 border-b border-card-border bg-primary-600 text-white">
             <h2 className="text-xl font-bold">Item Details</h2>
             <button
               onClick={onClose}
-              className="text-white hover:text-gray-200 text-2xl font-bold w-8 h-8 flex items-center justify-center"
+              className="text-white hover:text-primary-200 p-1 rounded-full hover:bg-primary-700 transition-colors"
             >
-              ×
+              <X className="w-5 h-5" />
             </button>
           </div>
 
@@ -142,111 +274,146 @@ const ItemDrawer = ({
             <div className="space-y-6">
               {/* Title and Status */}
               <div>
-                <h3 className="text-2xl font-bold text-text mb-2">
+                <h3 className="text-2xl font-bold text-text mb-3">
                   {item.name}
                 </h3>
-                <div className="flex items-center gap-2 mb-3">
+                <div className="flex items-center gap-2 mb-4">
                   <span
                     className={`px-3 py-1 rounded-full text-xs font-medium ${
                       item.status === "Available"
-                        ? "bg-green-100 text-green-800"
-                        : "bg-yellow-100 text-yellow-800"
+                        ? "bg-success-bg text-success"
+                        : item.status === "Pending Verification"
+                        ? "bg-alert-bg text-alert"
+                        : "bg-primary-50 text-primary-600"
                     }`}
                   >
                     {item.status}
                   </span>
-                  <span className="text-xs font-medium px-3 py-1 rounded-full bg-primary-100 text-primary-800">
+                  <span className="text-xs font-medium px-3 py-1 rounded-full bg-accent-light text-accent border border-accent/20">
                     {item.category}
                   </span>
+                  {item.images.length > 1 && (
+                    <span className="text-xs px-2 py-1 rounded-full bg-surface text-text-muted flex items-center gap-1">
+                      <Images className="w-3 h-3" />
+                      {item.images.length}
+                    </span>
+                  )}
                 </div>
               </div>
 
               {/* Description */}
-              <div>
-                <h4 className="font-semibold text-text mb-2">Description</h4>
+              <div className="bg-surface rounded-lg p-4">
+                <h4 className="font-semibold text-text mb-2 flex items-center">
+                  <FileText className="w-4 h-4 mr-2" />
+                  Description
+                </h4>
                 <p className="text-text-muted text-sm leading-relaxed">
                   {item.description}
                 </p>
               </div>
 
               {/* Features */}
-              {item.features && (
-                <div>
+              {item.features && item.features.length > 0 && (
+                <div className="bg-surface rounded-lg p-4">
                   <h4 className="font-semibold text-text mb-2">Features</h4>
-                  <ul className="list-disc list-inside text-text-muted text-sm space-y-1">
+                  <div className="flex flex-wrap gap-2">
                     {item.features.map((feature: string, index: number) => (
-                      <li key={index}>{feature}</li>
+                      <span
+                        key={index}
+                        className="px-2 py-1 bg-primary-50 text-primary-700 text-xs rounded-full border border-primary-200"
+                      >
+                        {feature}
+                      </span>
                     ))}
-                  </ul>
+                  </div>
                 </div>
               )}
 
               {/* Location & Office Info */}
               <div className="grid grid-cols-1 gap-4">
-                <div>
-                  <h4 className="font-semibold text-text mb-1">Found At</h4>
-                  <p className="text-text-muted text-sm">{item.foundAt}</p>
-                </div>
-                <div>
-                  <h4 className="font-semibold text-text mb-1">
-                    Checkpoint Office
-                  </h4>
-                  <p className="text-text-muted text-sm">
-                    {item.checkpointOffice}
-                  </p>
+                <div className="bg-surface rounded-lg p-4">
+                  <h5 className="font-medium text-text mb-3">
+                    Location Details
+                  </h5>
+                  <div className="space-y-3">
+                    <div className="flex items-center">
+                      <MapPin className="w-4 h-4 mr-2 text-text-muted" />
+                      <span className="text-text-muted text-sm">Found at:</span>
+                      <span className="ml-2 font-medium text-text">
+                        {item.foundAt}
+                      </span>
+                    </div>
+                    <div className="flex items-center">
+                      <Building className="w-4 h-4 mr-2 text-text-muted" />
+                      <span className="text-text-muted text-sm">Office:</span>
+                      <span className="ml-2 font-medium text-text">
+                        {item.checkpointOffice}
+                      </span>
+                    </div>
+                    <div className="flex items-center">
+                      <User className="w-4 h-4 mr-2 text-text-muted" />
+                      <span className="text-text-muted text-sm">Found by:</span>
+                      <span className="ml-2 font-medium text-text">
+                        {item.founder}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* Dates and Retention */}
-              <div className="grid grid-cols-1 gap-4">
-                <div>
-                  <h4 className="font-semibold text-text mb-1">Date Found</h4>
-                  <p className="text-text-muted text-sm">
-                    {formatDate(item.date)}
-                  </p>
-                </div>
-                <div>
-                  <h4 className="font-semibold text-text mb-1">
-                    Keyed In Date
-                  </h4>
-                  <p className="text-text-muted text-sm">
-                    {formatDate(item.keyedInDate)}
-                  </p>
-                </div>
-                <div>
-                  <h4 className="font-semibold text-text mb-1">
-                    Retention Period
-                  </h4>
-                  <div className="flex items-center gap-2">
-                    <p className="text-text-muted text-sm">
-                      {item.retentionPeriod} days left
-                    </p>
-                    {retentionStatus === "urgent" && (
-                      <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">
+              {/* Timeline & Retention */}
+              <div className="bg-surface rounded-lg p-4">
+                <h5 className="font-medium text-text mb-3">Timeline</h5>
+                <div className="space-y-3">
+                  <div className="flex items-center">
+                    <Calendar className="w-4 h-4 mr-2 text-text-muted" />
+                    <span className="text-text-muted text-sm">Found:</span>
+                    <span className="ml-2 font-medium text-text">
+                      {formatDate(item.date)}
+                    </span>
+                  </div>
+                  <div className="flex items-center">
+                    <Clock className="w-4 h-4 mr-2 text-text-muted" />
+                    <span className="text-text-muted text-sm">Logged:</span>
+                    <span className="ml-2 font-medium text-text">
+                      {formatDate(item.keyedInDate)}
+                    </span>
+                  </div>
+                  <div className="flex items-center">
+                    <Tag className="w-4 h-4 mr-2 text-text-muted" />
+                    <span className="text-text-muted text-sm">Expires in:</span>
+                    <span
+                      className={`ml-2 font-medium ${
+                        expiryStatus === "urgent"
+                          ? "text-error"
+                          : expiryStatus === "warning"
+                          ? "text-alert"
+                          : "text-text"
+                      }`}
+                    >
+                      {daysUntilExpiry} days
+                    </span>
+                    {expiryStatus === "urgent" && (
+                      <span className="ml-2 text-xs bg-error-bg text-error px-2 py-1 rounded-full">
                         Urgent
                       </span>
                     )}
-                    {retentionStatus === "warning" && (
-                      <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
+                    {expiryStatus === "warning" && (
+                      <span className="ml-2 text-xs bg-alert-bg text-alert px-2 py-1 rounded-full">
                         Soon
                       </span>
                     )}
                   </div>
                 </div>
               </div>
-
-              {/* Founder */}
-              <div>
-                <h4 className="font-semibold text-text mb-1">Found By</h4>
-                <p className="text-text-muted text-sm">{item.founder}</p>
-              </div>
             </div>
           </div>
 
           {/* Footer with Claim Button */}
-          <div className="p-6 border-t border-gray-200 bg-gray-50">
+          <div className="p-6 border-t border-card-border bg-surface">
             {item.status === "Available" ? (
-              <button className="w-full bg-primary-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-primary-700 transition-colors">
+              <button className="w-full bg-primary-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-primary-700 transition-colors flex items-center justify-center gap-2">
+                <Package className="w-4 h-4" />
                 Claim This Item
               </button>
             ) : (
@@ -254,11 +421,14 @@ const ItemDrawer = ({
                 disabled
                 className="w-full bg-gray-300 text-gray-500 py-3 px-6 rounded-lg font-medium cursor-not-allowed"
               >
-                Item Not Available for Claim
+                {item.status === "Claimed"
+                  ? "Item Already Claimed"
+                  : "Item Under Review"}
               </button>
             )}
-            <p className="text-xs text-text-muted mt-2 text-center">
-              Visit {item.checkpointOffice} with valid ID to claim
+            <p className="text-xs text-text-muted mt-3 text-center">
+              Visit {item.checkpointOffice} with valid ID and proof of ownership
+              to claim
             </p>
           </div>
         </div>
@@ -268,24 +438,26 @@ const ItemDrawer = ({
 };
 
 const ItemsBrowser = () => {
+  // Use local mock data for public page, only generate items once on mount
+  const [lostItems] = useState(() => generateMockItems(60));
+  const categories = useMemo(() => generateMockCategories(), []);
+
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [search, setSearch] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("All");
   const [page, setPage] = useState(1);
-  const [mockItems, setMockItems] = useState<any[]>([]);
-  const [filtered, setFiltered] = useState<any[]>([]);
-  const [items, setItems] = useState<any[]>([]);
-  const [selectedItem, setSelectedItem] = useState<any | null>(null);
+  const [filtered, setFiltered] = useState<LostItem[]>([]);
+  const [items, setItems] = useState<LostItem[]>([]);
+  const [selectedItem, setSelectedItem] = useState<LostItem | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const loader = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Generate mock items only on client
-  useEffect(() => {
-    setMockItems(generateMockItems(60));
-  }, []);
+  // Extract category names from categories
+  const categoryNames = categories.map((cat) => cat.name);
 
   // Pre-fill search and category from URL params on first load
   useEffect(() => {
@@ -297,25 +469,35 @@ const ItemsBrowser = () => {
     if (urlSearch) {
       setSearch(urlSearch);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
-  // Filter logic (client only)
+  // Filter logic
   useEffect(() => {
-    if (!mockItems.length) return;
-    const filteredItems = mockItems.filter((item) => {
+    if (!lostItems.length) return;
+    const filteredItems = lostItems.filter((item) => {
       const matchCategory =
         selectedCategories.length === 0 ||
         selectedCategories.includes(item.category);
       const matchSearch =
-        !search || item.name.toLowerCase().includes(search.toLowerCase());
+        !search ||
+        item.name.toLowerCase().includes(search.toLowerCase()) ||
+        item.description.toLowerCase().includes(search.toLowerCase()) ||
+        item.category.toLowerCase().includes(search.toLowerCase());
       const matchDateFrom = !dateFrom || item.date >= dateFrom;
       const matchDateTo = !dateTo || item.date <= dateTo;
-      return matchCategory && matchSearch && matchDateFrom && matchDateTo;
+      const matchStatus =
+        statusFilter === "All" || item.status === statusFilter;
+      return (
+        matchCategory &&
+        matchSearch &&
+        matchDateFrom &&
+        matchDateTo &&
+        matchStatus
+      );
     });
     setFiltered(filteredItems);
     setPage(1); // Reset page on filter change
-  }, [mockItems, search, selectedCategories, dateFrom, dateTo]);
+  }, [lostItems, search, selectedCategories, dateFrom, dateTo, statusFilter]);
 
   // Paginate items
   useEffect(() => {
@@ -336,10 +518,10 @@ const ItemsBrowser = () => {
 
   // Open drawer if id param is present
   useEffect(() => {
-    if (!mockItems.length) return;
+    if (!lostItems.length) return;
     const id = searchParams.get("id");
     if (id) {
-      const item = mockItems.find((itm) => itm.id === Number(id));
+      const item = lostItems.find((itm) => itm.id === Number(id));
       if (item) {
         setSelectedItem(item);
         setIsDrawerOpen(true);
@@ -348,7 +530,7 @@ const ItemsBrowser = () => {
       setIsDrawerOpen(false);
       setSelectedItem(null);
     }
-  }, [searchParams, mockItems]);
+  }, [searchParams, lostItems]);
 
   const handleCategoryChange = (cat: string) => {
     setSelectedCategories((prev) =>
@@ -356,17 +538,28 @@ const ItemsBrowser = () => {
     );
   };
 
-  const openItemDetails = (item: any) => {
+  const openItemDetails = (item: LostItem) => {
     router.push(`/browser?id=${item.id}`);
   };
 
   const closeDrawer = () => {
-    // Remove id param from URL
     const params = new URLSearchParams(Array.from(searchParams.entries()));
     params.delete("id");
     router.replace(`/browser${params.toString() ? `?${params}` : ""}`);
     setIsDrawerOpen(false);
     setTimeout(() => setSelectedItem(null), 300);
+  };
+
+  // Get category color
+  const getCategoryColor = (categoryName: string) => {
+    const category = categories.find((cat) => cat.name === categoryName);
+    return category?.color || "#3B82F6";
+  };
+
+  // Get category icon
+  const getCategoryIcon = (categoryName: string) => {
+    const category = categories.find((cat) => cat.name === categoryName);
+    return category ? getIconComponent(category.iconName) : Package;
   };
 
   return (
@@ -375,19 +568,19 @@ const ItemsBrowser = () => {
       <div className="absolute top-0 left-0 right-0 h-1 bg-primary-600 z-50"></div>
 
       {/* Sidebar: Logo and Navigation */}
-      <aside className="hidden md:flex w-64 min-w-[200px] bg-card-bg border-r border-card-border flex-col shadow-sm">
+      <aside className="hidden md:flex w-72 min-w-[250px] bg-card-bg border-r border-card-border flex-col shadow-sm">
         {/* Logo Section */}
         <div className="p-6 border-b border-card-border bg-primary-600">
           <Link href="/" className="flex items-center gap-3">
             <Image
-              src="/assets/logo.png"
-              alt="UniRecover Logo"
+              src="/assets/ugrecover.png"
+              alt="UGRecover Logo"
               width={36}
               height={36}
               className="border border-white rounded bg-white"
             />
             <span className="font-bold text-xl tracking-wide text-white">
-              UniRecover
+              UGRecover
             </span>
           </Link>
           <p className="text-primary-100 text-sm mt-2">
@@ -395,26 +588,60 @@ const ItemsBrowser = () => {
           </p>
         </div>
 
+        {/* Stats Section */}
+        <div className="p-6 border-b border-card-border bg-surface">
+          <h3 className="font-semibold text-text mb-3">Quick Stats</h3>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-card-bg rounded-lg p-3 border border-card-border">
+              <p className="text-xs text-text-muted">Total Items</p>
+              <p className="text-lg font-bold text-text">{lostItems.length}</p>
+            </div>
+            <div className="bg-card-bg rounded-lg p-3 border border-card-border">
+              <p className="text-xs text-text-muted">Available</p>
+              <p className="text-lg font-bold text-success">
+                {lostItems.filter((i) => i.status === "Available").length}
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Categories Section */}
-        <div className="flex-1 overflow-y-auto p-6 bg-surface">
+        <div className="flex-1 overflow-y-auto p-6">
           <h3 className="font-semibold text-text mb-4">Filter by Category</h3>
-          <div className="flex flex-col gap-3">
-            {categories.map((cat) => (
-              <label
-                key={cat}
-                className="flex items-center gap-3 cursor-pointer group hover:bg-primary-50 p-3 rounded-lg transition-all duration-200"
-              >
-                <input
-                  type="checkbox"
-                  checked={selectedCategories.includes(cat)}
-                  onChange={() => handleCategoryChange(cat)}
-                  className="w-4 h-4 text-primary-600 accent-primary-600 focus:ring-primary-500 focus:ring-2 rounded border-gray-300"
-                />
-                <span className="text-text font-medium group-hover:text-primary-700 transition-colors">
-                  {cat}
-                </span>
-              </label>
-            ))}
+          <div className="space-y-2">
+            {categories.map((cat) => {
+              const IconComponent = getIconComponent(cat.iconName);
+              return (
+                <label
+                  key={cat.name}
+                  className="flex items-center gap-3 cursor-pointer group hover:bg-primary-50 p-3 rounded-lg transition-all duration-200"
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedCategories.includes(cat.name)}
+                    onChange={() => handleCategoryChange(cat.name)}
+                    className="w-4 h-4 text-primary-600 accent-primary-600 focus:ring-primary-500 focus:ring-2 rounded border-gray-300"
+                  />
+                  <div
+                    className="p-1 rounded-md flex items-center justify-center"
+                    style={{
+                      backgroundColor: `${cat.color}15`,
+                      color: cat.color,
+                    }}
+                  >
+                    <IconComponent className="w-4 h-4" />
+                  </div>
+                  <div className="flex-1">
+                    <span className="text-text font-medium group-hover:text-primary-700 transition-colors">
+                      {cat.name}
+                    </span>
+                    <p className="text-xs text-text-muted">
+                      {cat.itemCount} items
+                    </p>
+                  </div>
+                </label>
+              );
+            })}
           </div>
         </div>
       </aside>
@@ -422,86 +649,124 @@ const ItemsBrowser = () => {
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Fixed Search and Filters Section */}
-        <div className="bg-card-bg border-b border-card-border px-2 md:px-10 py-3 shadow-sm">
+        <div className="bg-card-bg border-b border-card-border px-4 md:px-8 py-4 shadow-sm">
           {/* University Header */}
-          <div className="mb-2">
-            <h1 className="text-2xl font-bold text-primary-600 mb-2">
-              Lost & Found Items
+          <div className="mb-4">
+            <h1 className="text-2xl font-bold text-primary-600 mb-1">
+              Lost & Found Items Browser
             </h1>
             <p className="text-text-muted">
-              Browse items found around the University of Ghana campus
+              Browse and claim items found around the University of Ghana campus
             </p>
           </div>
 
-          <div className="flex flex-col md:flex-row md:items-end gap-4 mb-4">
-            <div className="flex-1 flex flex-col gap-2">
-              <label className="text-text font-semibold text-sm">
+          {/* Search and Filters */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
+            <div className="lg:col-span-2">
+              <label className="block text-text font-medium text-sm mb-2">
                 Search Items
               </label>
-              <input
-                type="text"
-                placeholder="Search by name, keyword..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="border border-card-border rounded-lg px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-card-bg text-text placeholder-text-muted transition-all"
-              />
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-muted w-4 h-4" />
+                <input
+                  type="text"
+                  placeholder="Search by name, description, category..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 border border-card-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-surface text-text placeholder-text-muted transition-all"
+                />
+              </div>
             </div>
-            <div className="flex flex-col gap-2">
-              <label className="text-text font-semibold text-sm">
+
+            <div>
+              <label className="block text-text font-medium text-sm mb-2">
+                Status
+              </label>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="w-full px-3 py-2.5 border border-card-border rounded-lg bg-surface text-text text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all"
+              >
+                <option value="All">All Status</option>
+                <option value="Available">Available</option>
+                <option value="Pending Verification">Under Review</option>
+                <option value="Claimed">Claimed</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-text font-medium text-sm mb-2">
                 Date From
               </label>
               <input
                 type="date"
                 value={dateFrom}
                 onChange={(e) => setDateFrom(e.target.value)}
-                className="border border-card-border rounded-lg px-3 py-3 bg-card-bg text-text focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all"
+                className="w-full px-3 py-2.5 border border-card-border rounded-lg bg-surface text-text text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all"
               />
             </div>
-            <div className="flex flex-col gap-2">
-              <label className="text-text font-semibold text-sm">Date To</label>
+
+            <div>
+              <label className="block text-text font-medium text-sm mb-2">
+                Date To
+              </label>
               <input
                 type="date"
                 value={dateTo}
                 onChange={(e) => setDateTo(e.target.value)}
-                className="border border-card-border rounded-lg px-3 py-3 bg-card-bg text-text focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all"
+                className="w-full px-3 py-2.5 border border-card-border rounded-lg bg-surface text-text text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all"
               />
             </div>
           </div>
 
           {/* Categories (mobile) */}
-          <div className="md:hidden flex gap-2 overflow-x-auto pb-2">
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => handleCategoryChange(cat)}
-                className={`px-4 py-2 rounded-full border font-medium whitespace-nowrap transition-all ${
-                  selectedCategories.includes(cat)
-                    ? "bg-primary-600 text-white border-primary-600 shadow-sm"
-                    : "bg-surface text-text-muted border-card-border hover:bg-primary-50 hover:text-primary-700 hover:border-primary-300"
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
+          <div className="md:hidden">
+            <h4 className="font-medium text-text text-sm mb-3">Categories</h4>
+            <div className="flex gap-2 overflow-x-auto pb-2">
+              {categories.map((cat) => {
+                const IconComponent = getIconComponent(cat.iconName);
+                return (
+                  <button
+                    key={cat.name}
+                    onClick={() => handleCategoryChange(cat.name)}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-full border font-medium whitespace-nowrap transition-all text-sm ${
+                      selectedCategories.includes(cat.name)
+                        ? "text-white border-primary-600 shadow-sm"
+                        : "bg-surface text-text-muted border-card-border hover:bg-primary-50 hover:text-primary-700 hover:border-primary-300"
+                    }`}
+                    style={
+                      selectedCategories.includes(cat.name)
+                        ? { backgroundColor: cat.color }
+                        : {}
+                    }
+                  >
+                    <IconComponent className="w-3 h-3" />
+                    {cat.name}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
 
         {/* Scrollable Items Section */}
-        <div className="flex-1 overflow-y-auto px-2 md:px-10 py-6 bg-background">
+        <div className="flex-1 overflow-y-auto px-4 md:px-8 py-6 bg-background">
           {items.length === 0 ? (
-            <div className="text-center text-text-muted mt-12 text-lg">
+            <div className="text-center text-text-muted mt-12">
               <div className="max-w-md mx-auto bg-card-bg p-8 rounded-xl border border-card-border shadow-sm">
-                <div className="text-4xl mb-4">🔍</div>
+                <Package className="w-16 h-16 text-text-muted mx-auto mb-4" />
                 <p className="font-medium text-text mb-2">No items found</p>
                 <p className="text-sm">
-                  Try adjusting your search filters to find more items
+                  {lostItems.length === 0
+                    ? "No items available at the moment. Please check back later."
+                    : "Try adjusting your search filters to find more items"}
                 </p>
               </div>
             </div>
           ) : (
             <>
               {/* Results Count */}
-              <div className="mb-6">
+              <div className="mb-6 flex items-center justify-between">
                 <p className="text-text-muted text-sm">
                   Showing{" "}
                   <span className="font-medium text-text">{items.length}</span>{" "}
@@ -511,65 +776,129 @@ const ItemsBrowser = () => {
                   </span>{" "}
                   items
                 </p>
+                <div className="text-xs text-text-light">
+                  Last updated: {formatDate(new Date().toISOString())}
+                </div>
               </div>
 
               {/* Items Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                {items.map((item) => (
-                  <div
-                    key={item.id}
-                    onClick={() => openItemDetails(item)}
-                    className="bg-card-bg rounded-xl shadow-sm hover:shadow-md p-6 flex flex-col items-center border border-card-border transition-all duration-200 hover:border-primary-300 hover:-translate-y-1 group cursor-pointer"
-                  >
-                    <div className="mb-4 w-full h-32 bg-gray-50 rounded-xl overflow-hidden group-hover:bg-primary-50 transition-colors duration-200">
-                      <Image
-                        src={item.mainImage}
-                        alt={item.name}
-                        width={200}
-                        height={128}
-                        className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
-                        onError={(e) => {
-                          e.currentTarget.src = "/assets/file.svg";
-                        }}
-                      />
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {items.map((item) => {
+                  const CategoryIcon = getCategoryIcon(item.category);
+                  const categoryColor = getCategoryColor(item.category);
+                  const daysUntilExpiry = getDaysUntilExpiry(
+                    item.keyedInDate,
+                    item.retentionPeriod
+                  );
+
+                  return (
+                    <div
+                      key={item.id}
+                      onClick={() => openItemDetails(item)}
+                      className="bg-card-bg rounded-xl shadow-sm hover:shadow-md p-5 flex flex-col border border-card-border transition-all duration-200 hover:border-primary-300 hover:-translate-y-1 group cursor-pointer"
+                    >
+                      <div className="mb-4 w-full h-40 bg-surface rounded-xl overflow-hidden group-hover:bg-primary-50 transition-colors duration-200">
+                        <img
+                          src={item.mainImage}
+                          alt={item.name}
+                          className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
+                          onError={(e) => {
+                            e.currentTarget.src = "/assets/file.svg";
+                          }}
+                        />
+                      </div>
+
+                      <div className="flex-1 space-y-3">
+                        <div>
+                          <h3 className="font-semibold text-base mb-2 text-text group-hover:text-primary-700 transition-colors line-clamp-2">
+                            {item.name}
+                          </h3>
+
+                          <div className="flex items-center gap-2 mb-2">
+                            <div
+                              className="p-1 rounded-md flex items-center gap-1 text-xs font-medium border"
+                              style={{
+                                backgroundColor: `${categoryColor}10`,
+                                color: categoryColor,
+                                borderColor: `${categoryColor}30`,
+                              }}
+                            >
+                              <CategoryIcon className="w-3 h-3" />
+                              {item.category}
+                            </div>
+                            {item.images.length > 1 && (
+                              <span className="text-xs px-2 py-1 rounded-full bg-surface text-text-muted flex items-center gap-1">
+                                <Images className="w-2 h-2" />
+                                {item.images.length}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="space-y-2 text-sm">
+                          <div className="flex items-center text-text-muted">
+                            <MapPin className="w-3 h-3 mr-1" />
+                            <span className="truncate">{item.foundAt}</span>
+                          </div>
+                          <div className="flex items-center text-text-muted">
+                            <Building className="w-3 h-3 mr-1" />
+                            <span className="truncate">
+                              {item.checkpointOffice}
+                            </span>
+                          </div>
+                          <div className="flex items-center text-text-muted">
+                            <Calendar className="w-3 h-3 mr-1" />
+                            <span>{formatDate(item.date)}</span>
+                          </div>
+                        </div>
+
+                        <div className="pt-2 flex items-center justify-between">
+                          <span
+                            className={`text-xs px-2 py-1 rounded-full font-medium ${
+                              item.status === "Available"
+                                ? "bg-success-bg text-success"
+                                : item.status === "Pending Verification"
+                                ? "bg-alert-bg text-alert"
+                                : "bg-primary-50 text-primary-600"
+                            }`}
+                          >
+                            {item.status}
+                          </span>
+
+                          {item.status === "Available" && (
+                            <div className="text-xs text-text-muted">
+                              {daysUntilExpiry > 0 ? (
+                                <span
+                                  className={
+                                    daysUntilExpiry <= 7
+                                      ? "text-error font-medium"
+                                      : ""
+                                  }
+                                >
+                                  {daysUntilExpiry}d left
+                                </span>
+                              ) : (
+                                <span className="text-error font-medium">
+                                  Expired
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    <h3 className="font-semibold text-lg mb-2 text-text text-center group-hover:text-primary-700 transition-colors">
-                      {item.name}
-                    </h3>
-                    <span className="text-xs font-medium px-3 py-1 rounded-full bg-primary-100 text-primary-800 mb-3 border border-primary-200">
-                      {item.category}
-                    </span>
-                    <div className="text-center space-y-1 mb-4">
-                      <p className="text-text-muted text-sm">
-                        <span className="font-medium">Found at:</span>{" "}
-                        {item.foundAt}
-                      </p>
-                      <p className="text-text-light text-xs">
-                        {formatDate(item.date)}
-                      </p>
-                    </div>
-                    <div className="mt-auto">
-                      <span
-                        className={`text-xs px-2 py-1 rounded-full ${
-                          item.status === "Available"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-yellow-100 text-yellow-800"
-                        }`}
-                      >
-                        {item.status}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {/* Loader for infinite scroll */}
               <div
                 ref={loader}
-                className="h-10 flex items-center justify-center mt-8"
+                className="h-16 flex items-center justify-center mt-8"
               >
                 {items.length < filtered.length && (
-                  <div className="text-text-muted text-sm bg-card-bg px-4 py-2 rounded-full border border-card-border">
+                  <div className="text-text-muted text-sm bg-card-bg px-4 py-2 rounded-full border border-card-border flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-primary-600 border-t-transparent rounded-full animate-spin"></div>
                     Loading more items...
                   </div>
                 )}
