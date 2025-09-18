@@ -46,7 +46,7 @@ const iconMap: { [key: string]: React.FC<any> } = {
   Package,
 };
 
-const categories = [
+const categoryNames = [
   "Electronics",
   "Books",
   "Clothing",
@@ -56,30 +56,28 @@ const categories = [
   "Keys",
   "Others",
 ];
+const categoryColors = [
+  "#3B82F6", // Blue
+  "#10B981", // Green
+  "#F59E0B", // Amber
+  "#EF4444", // Red
+  "#8B5CF6", // Purple
+  "#06B6D4", // Cyan
+  "#F97316", // Orange
+  "#6B7280", // Gray
+];
+const categoryIcons = [
+  "Smartphone", // Electronics
+  "BookOpen", // Books
+  "Shirt", // Clothing
+  "Watch", // Accessories
+  "FileText", // Documents
+  "Briefcase", // Bags
+  "Key", // Keys
+  "Package", // Others
+];
 function generateMockCategories(): Category[] {
-  const categoryColors = [
-    "#3B82F6", // Blue
-    "#10B981", // Green
-    "#F59E0B", // Amber
-    "#EF4444", // Red
-    "#8B5CF6", // Purple
-    "#06B6D4", // Cyan
-    "#F97316", // Orange
-    "#6B7280", // Gray
-  ];
-
-  const categoryIcons = [
-    "Smartphone", // Electronics
-    "BookOpen", // Books
-    "Shirt", // Clothing
-    "Watch", // Accessories
-    "FileText", // Documents
-    "Briefcase", // Bags
-    "Key", // Keys
-    "Package", // Others
-  ];
-
-  return categories.map((name, index) => ({
+  return categoryNames.map((name, index) => ({
     id: index + 1,
     name,
     description: `Category for ${name.toLowerCase()} items found on campus`,
@@ -438,9 +436,9 @@ const ItemDrawer = ({
 };
 
 const ItemsBrowser = () => {
-  // Use local mock data for public page, only generate items once on mount
-  const [lostItems] = useState(() => generateMockItems(60));
-  const categories = useMemo(() => generateMockCategories(), []);
+  // Only generate mock data on client to avoid hydration errors
+  const [lostItems, setLostItems] = useState<LostItem[] | null>(null);
+  const [categories, setCategories] = useState<Category[] | null>(null);
 
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [search, setSearch] = useState("");
@@ -456,11 +454,20 @@ const ItemsBrowser = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  // Generate mock data only on client
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setLostItems(generateMockItems(60));
+      setCategories(generateMockCategories());
+    }
+  }, []);
+
   // Extract category names from categories
-  const categoryNames = categories.map((cat) => cat.name);
+  const categoryNames = categories ? categories.map((cat) => cat.name) : [];
 
   // Pre-fill search and category from URL params on first load
   useEffect(() => {
+    if (!categories) return;
     const urlCategory = searchParams.get("category");
     const urlSearch = searchParams.get("search");
     if (urlCategory) {
@@ -469,11 +476,11 @@ const ItemsBrowser = () => {
     if (urlSearch) {
       setSearch(urlSearch);
     }
-  }, [searchParams]);
+  }, [searchParams, categories]);
 
   // Filter logic
   useEffect(() => {
-    if (!lostItems.length) return;
+    if (!lostItems) return;
     const filteredItems = lostItems.filter((item) => {
       const matchCategory =
         selectedCategories.length === 0 ||
@@ -518,7 +525,7 @@ const ItemsBrowser = () => {
 
   // Open drawer if id param is present
   useEffect(() => {
-    if (!lostItems.length) return;
+    if (!lostItems) return;
     const id = searchParams.get("id");
     if (id) {
       const item = lostItems.find((itm) => itm.id === Number(id));
@@ -552,15 +559,22 @@ const ItemsBrowser = () => {
 
   // Get category color
   const getCategoryColor = (categoryName: string) => {
+    if (!categories) return "#3B82F6";
     const category = categories.find((cat) => cat.name === categoryName);
     return category?.color || "#3B82F6";
   };
 
   // Get category icon
   const getCategoryIcon = (categoryName: string) => {
+    if (!categories) return Package;
     const category = categories.find((cat) => cat.name === categoryName);
     return category ? getIconComponent(category.iconName) : Package;
   };
+
+  if (!lostItems || !categories) {
+    // Prevent hydration errors: don't render until data is ready
+    return null;
+  }
 
   return (
     <div className="h-screen bg-background flex overflow-hidden">
