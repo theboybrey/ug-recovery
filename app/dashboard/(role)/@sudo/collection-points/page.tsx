@@ -155,6 +155,7 @@ const SudoCollectionPoints: React.FC = () => {
   const assignOfficer = (officer: Officer): void => {
     if (!selectedPoint) return;
     // Mark officer as assigned
+    // Mark officer as assigned globally
     const updatedOfficer = { ...officer, assigned: true };
     setOfficers(
       officers.map((o) => (o.id === officer.id ? updatedOfficer : o))
