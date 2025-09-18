@@ -30,7 +30,7 @@ export default function DashboardLayout({
               <main className="flex-grow p-4 text-text bg-gray-light max-h-[93vh] overflow-y-auto">
                 {children}
               </main>
-              <Footer />
+              {/* <Footer /> */}
             </div>
           </div>
         </div>

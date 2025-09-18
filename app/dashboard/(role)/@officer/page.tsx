@@ -19,6 +19,10 @@ import {
   YAxis,
 } from "recharts";
 import React, { useEffect, useState } from "react";
+import Link from "next/link";
+
+import { useAuthContext } from "@/hooks/userContext";
+
 
 const mockData = {
   officer: {
@@ -171,6 +175,27 @@ const CampusFoundDashboard = () => {
           <p className="opacity-90">
             {data.myCollectionPoint} - Manage your items and claims
           </p>
+          {/* Quick Links */}
+          <div className="mt-4 flex flex-wrap gap-4">
+            <Link
+              href="/dashboard/my-items"
+              className="bg-white text-secondary-700 px-4 py-2 rounded-lg font-medium shadow hover:bg-secondary-50 transition"
+            >
+              My Items
+            </Link>
+            <Link
+              href="/dashboard/(role)/my-claims"
+              className="bg-white text-alert px-4 py-2 rounded-lg font-medium shadow hover:bg-alert-bg transition"
+            >
+              Pending Claims
+            </Link>
+            <Link
+              href="/dashboard/released-items"
+              className="bg-white text-success px-4 py-2 rounded-lg font-medium shadow hover:bg-success-bg transition"
+            >
+              Released Items
+            </Link>
+          </div>
         </div>
 
         {/* Stats Grid */}
@@ -246,33 +271,36 @@ const CampusFoundDashboard = () => {
           </h3>
           <div className="space-y-3">
             {data.recentItems.map((item) => (
-              <div
+              <Link
                 key={item.id}
-                className="flex items-center justify-between p-4 border border-card-border rounded-lg hover:bg-surface"
+                href={`/dashboard/(role)/@officer/items/${item.id}`}
+                className="block"
               >
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-surface-dim rounded-lg flex items-center justify-center">
-                    <Package className="w-6 h-6 text-text-muted" />
+                <div className="flex items-center justify-between p-4 border border-card-border rounded-lg hover:bg-surface cursor-pointer">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-12 h-12 bg-surface-dim rounded-lg flex items-center justify-center">
+                      <Package className="w-6 h-6 text-text-muted" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-text">{item.name}</h4>
+                      <p className="text-sm text-text-muted">
+                        {item.category} • {item.date}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="font-medium text-text">{item.name}</h4>
-                    <p className="text-sm text-text-muted">
-                      {item.category} • {item.date}
-                    </p>
-                  </div>
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-medium ${
+                      item.status === "Pending"
+                        ? "bg-alert-bg text-alert"
+                        : item.status === "Claimed"
+                        ? "bg-primary-50 text-primary-600"
+                        : "bg-success-bg text-success"
+                    }`}
+                  >
+                    {item.status}
+                  </span>
                 </div>
-                <span
-                  className={`px-3 py-1 rounded-full text-xs font-medium ${
-                    item.status === "Pending"
-                      ? "bg-alert-bg text-alert"
-                      : item.status === "Claimed"
-                      ? "bg-primary-50 text-primary-600"
-                      : "bg-success-bg text-success"
-                  }`}
-                >
-                  {item.status}
-                </span>
-              </div>
+              </Link>
             ))}
           </div>
         </div>
