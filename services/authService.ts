@@ -8,8 +8,8 @@ import { IRoles } from "@/models/roles.model";
 import { queryClient } from "@/app/provider";
 
 export const roleToMap = new Map([
-  ["hod", IRoles.HOD],
-  ["lecturer", IRoles.LECTURER],
+  ["sudo", IRoles.SUDO],
+  ["officer", IRoles.OFFICER],
   ["student", IRoles.STUDENT],
 ]);
 
@@ -51,7 +51,6 @@ export enum AuthQueryKeys {
   AuthUser = "AuthUser",
   AuthUserRole = "AuthUserRole", //Depends on AuthUser
 }
-
 
 //Setting default values for AuthUserData
 queryClient.ensureQueryData({
@@ -103,9 +102,8 @@ export class AuthServiceTSQ implements IauthService {
   }
 
   public isRole(roles: IRoles[]) {
-    return roles.includes(this.getAuthUser()?.role ?? IRoles.HOD);
+    return roles.includes(this.getAuthUser()?.role ?? IRoles.SUDO);
   }
-
 
   // Apparently
   async getUserData() {
@@ -154,21 +152,21 @@ export class AuthServiceTSQ implements IauthService {
       queryKey: [AuthQueryKeys.AuthUser],
     });
   }
-  
+
   public async refreshToken(failedRequest: any) {
     const refresh_token = Cookies.get("refresh_token");
     if (refresh_token !== undefined)
-      return Axios
-        .post("/user/refresh-token", { refreshToken: refresh_token })
-        .then((res) => {
-          Cookies.set("access_token", res.data.access_token);
-          Cookies.set("refresh_token", res.data.refresh_token);
-          Cookies.set("DmsToken", res.data.expiresAt);
+      return Axios.post("/user/refresh-token", {
+        refreshToken: refresh_token,
+      }).then((res) => {
+        Cookies.set("access_token", res.data.access_token);
+        Cookies.set("refresh_token", res.data.refresh_token);
+        Cookies.set("DmsToken", res.data.expiresAt);
 
-          failedRequest.response.config.headers["Authorization"] =
-            "Bearer " + res.data.access_token;
-          return Promise.resolve();
-        });
+        failedRequest.response.config.headers["Authorization"] =
+          "Bearer " + res.data.access_token;
+        return Promise.resolve();
+      });
   }
 }
 

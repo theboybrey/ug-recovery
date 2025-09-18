@@ -46,11 +46,28 @@ const LoginFooter = () => (
 const LoginPage = () => {
   const [loading, setLoading] = React.useState<boolean>(false);
   const { login } = useAuthContext();
+
+  // Default credentials for each role
+  const defaultCredentials = {
+    sudo: {
+      email: "sudo@ug.edu.gh",
+      password: "sudo1234",
+    },
+    officer: {
+      email: "officer@ug.edu.gh",
+      password: "officer1234",
+    },
+    student: {
+      email: "student@st.ug.edu.gh",
+      password: "student1234",
+    },
+  };
+
   const { handleSubmit, setFieldValue, ...form } = useFormik({
     initialValues: {
       email: "",
       password: "",
-      role: "STUDENT", // Default to student
+      role: "student", // Default to student (lowercase to match roleOptions)
     },
     validationSchema: Yup.object().shape({
       email: Yup.string()
@@ -65,22 +82,29 @@ const LoginPage = () => {
     }),
     onSubmit: async (values) => {
       setLoading(true);
-      UserService.login(
-        values.email,
-        values.password,
-        values.role as IRoles,
-        (error, user) => {
-          setLoading(false);
-          if (!error) {
-            // Include role in login process
-            login({ ...user, role: values.role });
-            window.location.href = "/dashboard";
-          } else {
-            console.error(error);
-            toasts.error("Login 👺", error);
+      const creds =
+        defaultCredentials[values.role as keyof typeof defaultCredentials];
+      if (values.email === creds.email && values.password === creds.password) {
+        // Simulate user object for login
+        UserService.login(
+          values.email,
+          values.password,
+          values.role as IRoles,
+          (error, user) => {
+            setLoading(false);
+            if (!error) {
+              login({ ...user, role: values.role });
+              window.location.href = "/dashboard";
+            } else {
+              console.error(error);
+              toasts.error("Login 👺", error);
+            }
           }
-        }
-      );
+        );
+      } else {
+        setLoading(false);
+        toasts.error("Login 👺", "Invalid email or password for selected role");
+      }
     },
   });
 
