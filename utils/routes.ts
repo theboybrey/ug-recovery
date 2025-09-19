@@ -53,11 +53,11 @@ export const getRoutes = (role: IRoles): INavItem[] => {
           path: "items",
           Icon: ShoppingBag,
         },
-        {
-          name: "All Claims",
-          path: "claims",
-          Icon: DocumentText,
-        },
+        // {
+        //   name: "All Claims",
+        //   path: "claims",
+        //   Icon: DocumentText,
+        // },
         {
           name: "Categories",
           path: "categories",
@@ -88,15 +88,16 @@ export const getRoutes = (role: IRoles): INavItem[] => {
     case IRoles.OFFICER:
       return [
         ...defaults,
-        {
-          name: "Add New Item",
-          path: "add-item",
-          Icon: AddSquare,
-        },
+
         {
           name: "My Items",
           path: "my-items",
           Icon: ShoppingBag,
+        },
+        {
+          name: "Add New Item",
+          path: "add-item",
+          Icon: AddSquare,
         },
         {
           name: "Pending Claims",
@@ -108,16 +109,21 @@ export const getRoutes = (role: IRoles): INavItem[] => {
           path: "verify-release",
           Icon: Check,
         },
-        {
-          name: "My Collection Point",
-          path: "my-collection-point",
-          Icon: Location,
-        },
+        // {
+        //   name: "My Collection Point",
+        //   path: "my-collection-point",
+        //   Icon: Location,
+        // },
         {
           name: "Released Items",
           path: "released-items",
           Icon: Firstline,
         },
+        // {
+        //   name: "Dashboard",
+        //   path: "",
+        //   Icon: Home,
+        // },
       ];
 
     // If you need a Student role for internal management
